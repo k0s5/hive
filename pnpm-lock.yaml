@@ -22,6 +22,12 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
+  packages/shared:
+    dependencies:
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.67
+
 packages:
 
   '@types/node@24.0.3':
@@ -74,6 +80,9 @@ packages:
   undici-types@7.8.0:
     resolution: {integrity: sha512-9UJ2xGDvQ43tYyVMpuHlsgApydB8ZKfVYTsLDhXkFL/6gfkp+U8xTGdh8pMJv1SpZna0zxG1DwsKZsreLbXBxw==}
 
+  zod@3.25.67:
+    resolution: {integrity: sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==}
+
 snapshots:
 
   '@types/node@24.0.3':
@@ -112,3 +121,5 @@ snapshots:
   typescript@5.8.3: {}
 
   undici-types@7.8.0: {}
+
+  zod@3.25.67: {}
