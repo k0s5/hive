@@ -1,0 +1,26 @@
+{
+  "name": "hive",
+  "version": "0.0.1",
+  "scripts": {
+    "docker:dev:mongo:up": "docker-compose -f docker-compose.dev.yml up -d mongo",
+    "docker:dev:redis:up": "docker-compose -f docker-compose.dev.yml up -d redis",
+    "docker:dev:db:up": "docker-compose -f docker-compose.dev.yml up -d mongo mongo-express redis redis-commander postgres adminer",
+    "docker:dev:db:down": "docker-compose -f docker-compose.dev.yml down mongo mongo-express redis redis-commander postgres adminer"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "turbo": "^2.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.3",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@10.12.1",
+  "engines": {
+    "node": ">=22.16.0",
+    "pnpm": ">=10.12.1"
+  }
+}

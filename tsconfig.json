@@ -1,0 +1,68 @@
+{
+  "compilerOptions": {
+    // Базовые настройки компилятора
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "moduleResolution": "node",
+    "allowJs": true,
+    "checkJs": false,
+
+    // Строгость типизации
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+
+    // Настройки модулей и импортов
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    // Настройки декораторов (для NestJS)
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    // Настройки компиляции
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false,
+    "skipLibCheck": true,
+
+    // Путь для сборки
+    "outDir": "./dist",
+    "rootDir": "./",
+
+    // Настройки для монорепозитория
+    "composite": true,
+    "incremental": true,
+
+    // Алиасы путей
+    "baseUrl": ".",
+    "paths": {
+      "@hive/shared/*": ["packages/shared/src/*"],
+      "@hive/common/*": ["libs/common/src/*"],
+      "@hive/database/*": ["libs/database/src/*"],
+      "@hive/tsconfig": ["tsconfig.json"]
+    }
+  },
+  "include": ["**/*"],
+  "exclude": [
+    "node_modules",
+    "**/node_modules",
+    "dist",
+    "**/dist",
+    "build",
+    "**/build",
+    "coverage",
+    "**/coverage",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+  "references": []
+}
