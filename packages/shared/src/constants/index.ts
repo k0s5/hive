@@ -1,4 +1,5 @@
 export * from './apiRoutes'
 export * from './httpStatuses'
 export * from './validationRules'
+export * from './errorMessages'
 export * from './websoketEvents'
