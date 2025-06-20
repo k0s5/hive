@@ -8,7 +8,7 @@ import { AuthModule } from './modules/auth'
 // import { UsersModule } from './modules/users/users.module'
 // import { ChatsModule } from './modules/chats/chats.module'
 // import { NotificationsModule } from './modules/notifications/notifications.module'
-// import { HealthModule } from './modules/health/health.module'
+import { HealthModule } from './modules/health/health.module'
 import { ThrottlerConfigService } from './config/throttler.config'
 
 @Module({
@@ -36,6 +36,7 @@ import { ThrottlerConfigService } from './config/throttler.config'
       ttl: 300, // 5 minutes default TTL
     }),
     AuthModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

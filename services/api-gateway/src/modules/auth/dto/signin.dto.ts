@@ -16,7 +16,10 @@ export class SigninDto {
   })
   @IsString()
   @MinLength(VALIDATION_RULES.AUTH.PASSWORD_MIN_LENGTH, {
-    message: ERROR_MESSAGES.COMMON.REQUIRED('Password'),
+    message: ERROR_MESSAGES.COMMON.MIN_LENGTH(
+      'Password',
+      VALIDATION_RULES.AUTH.PASSWORD_MIN_LENGTH
+    ),
   })
   @MaxLength(VALIDATION_RULES.AUTH.PASSWORD_MAX_LENGTH, {
     message: ERROR_MESSAGES.COMMON.MAX_LENGTH(
