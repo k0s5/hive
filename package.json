@@ -2,6 +2,7 @@
   "name": "hive",
   "version": "0.0.1",
   "scripts": {
+    "dev": "turbo dev",
     "docker:dev:mongo:up": "docker-compose -f docker-compose.dev.yml up -d mongo",
     "docker:dev:redis:up": "docker-compose -f docker-compose.dev.yml up -d redis",
     "docker:dev:db:up": "docker-compose -f docker-compose.dev.yml up -d mongo mongo-express redis redis-commander postgres adminer",
