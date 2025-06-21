@@ -33,7 +33,7 @@ export class AuthService {
         )
       )
 
-      const { user } = response.data
+      const user = response.data
       const tokens = await this.generateTokens(user)
 
       return {
@@ -68,7 +68,8 @@ export class AuthService {
         )
       )
 
-      const { user } = response.data
+      const user = response.data
+
       const tokens = await this.generateTokens(user)
 
       return {
@@ -133,10 +134,17 @@ export class AuthService {
     }
   }
 
-  async getProfile(userId: string) {
+  async me(userId: string) {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${this.authServiceUrl}/users/${userId}`)
+        this.httpService.get(
+          `${this.authServiceUrl}${API_ROUTES.AUTH.ME}/${userId}`,
+          {
+            headers: {
+              'x-user-id': userId,
+            },
+          }
+        )
       )
 
       return {
@@ -149,6 +157,21 @@ export class AuthService {
         error.response?.data || error.message
       )
       throw error
+    }
+  }
+
+  async getSelf(payload: TokenPayload) {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(
+          `${this.authServiceUrl}${API_ROUTES.AUTH.ME}/${payload.userId}`
+        )
+      )
+
+      return response.data
+    } catch (error) {
+      this.logger.error('User self validation failed', error.message)
+      return null
     }
   }
 
@@ -169,7 +192,7 @@ export class AuthService {
     const payload: Omit<TokenPayload, 'iat' | 'exp'> = {
       userId: user.id,
       email: user.email,
-      username: user.username,
+      ...(user && { username: user.username }),
     }
 
     const [accessToken, refreshToken] = await Promise.all([

@@ -21,7 +21,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   async validate(payload: TokenPayload) {
     // payload - это декодированный JWT токен
-    const user = await this.authService.validateUser(payload)
+    // const user = await this.authService.validateUser(payload)
+    const { data: user } = await this.authService.me(payload.userId)
+    console.log('dfbbdbdd', user)
     if (!user) {
       throw new UnauthorizedException('User not found or token invalid')
     }

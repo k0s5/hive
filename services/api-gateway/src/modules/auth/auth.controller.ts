@@ -6,6 +6,7 @@ import {
   UseGuards,
   Request,
   HttpStatus,
+  HttpCode,
 } from '@nestjs/common'
 import {
   ApiTags,
@@ -21,13 +22,13 @@ import { SignupDto } from './dto/signup.dto'
 import { SigninDto } from './dto/signin.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'
 import { API_ROUTES } from '@hive/shared'
-import { ConfigService } from '@nestjs/config'
 
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  //#region SIGNUP
   @Post(API_ROUTES.AUTH.SIGNUP)
   @Throttle({ short: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @ApiOperation({ summary: 'Register a new user' })
@@ -46,8 +47,11 @@ export class AuthController {
   async signup(@Body() signupDto: SignupDto) {
     return this.authService.signup(signupDto)
   }
+  //#endregion SIGNUP
 
+  //#region SIGNIN
   @Post(API_ROUTES.AUTH.SIGNIN)
+  @HttpCode(200)
   @Throttle({ short: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @ApiOperation({ summary: 'Sign in user' })
   @ApiResponse({
@@ -61,7 +65,9 @@ export class AuthController {
   async signin(@Body() signinDto: SigninDto) {
     return this.authService.signin(signinDto)
   }
+  //#endregion SIGNIN
 
+  //#region REFRESH
   @Post(API_ROUTES.AUTH.REFRESH)
   @UseGuards(JwtRefreshGuard)
   @ApiOperation({ summary: 'Refresh access token' })
@@ -79,6 +85,7 @@ export class AuthController {
       refreshTokenDto.refreshToken
     )
   }
+  //#endregion REFRESH
 
   //#region SIGNOUT
   @Post(API_ROUTES.AUTH.SIGNOUT)
@@ -94,6 +101,7 @@ export class AuthController {
   }
   //#endregion SIGNOUT
 
+  //#region ME
   @Get(API_ROUTES.AUTH.ME)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -106,7 +114,12 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid or expired token',
   })
-  async getProfile(@Request() req: any) {
-    return this.authService.getProfile(req.user.userId)
+  async me(@Request() req: any) {
+    return {
+      success: true,
+      data: req.user,
+    }
+    // return this.authService.me(req.user.userId)
   }
+  //#endregion ME
 }
