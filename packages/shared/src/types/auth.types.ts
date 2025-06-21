@@ -25,7 +25,7 @@ export interface AuthTokens {
 export interface TokenPayload {
   userId: string
   email: string
-  username: string
+  username?: string
   iat: number
   exp: number
 }
