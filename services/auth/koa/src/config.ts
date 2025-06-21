@@ -8,13 +8,10 @@ dotenv.config({
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  saltRounds: process.env.SALT_ROUNDS,
+  saltRounds: process.env.SALT_ROUNDS
+    ? parseInt(process.env.SALT_ROUNDS) || undefined // if NaN then undefined
+    : undefined,
 
-  mongodb: {
-    uri:
-      process.env.MONGO_URI ||
-      `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@localhost:27017/${process.env.MONGO_DB_NAME}`,
-  },
   postgres: {
     uri:
       process.env.POSTGRES_URI ||
