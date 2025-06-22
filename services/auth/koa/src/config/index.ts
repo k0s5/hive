@@ -36,8 +36,6 @@ function validateEnv(): Config {
     throw new Error(`Config validation error:\n${errorMessage}`)
   }
 
-  console.log('============ CONFIG:', value)
-
   // Transform a flat structure into a nested one
   return {
     nodeEnv: value.NODE_ENV,
