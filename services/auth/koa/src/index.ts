@@ -1,20 +1,12 @@
 import 'dotenv/config'
-import Koa from 'koa'
+import Koa, { type BaseContext } from 'koa'
 import cors from '@koa/cors'
 import { bodyParser } from '@koa/bodyparser'
 import { PrismaClient } from '@prisma/client'
 import router from './routes'
-import { config } from './config'
+import prisma from './providers/prisma'
 
 const app = new Koa()
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: config.postgres.uri,
-    },
-  },
-})
 
 app.use(
   cors({
