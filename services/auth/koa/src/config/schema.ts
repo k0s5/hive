@@ -11,6 +11,14 @@ export const envSchema = Joi.object({
   PORT_GATEWAY: Joi.number().port(),
 
   CORS_ORIGIN: Joi.string().default('*'),
+
+  // Postgres
+  POSTGRES_DB_NAME: Joi.string(),
+  POSTGRES_HOST: Joi.string(),
+  POSTGRES_USER: Joi.string(),
+  POSTGRES_PASS: Joi.string(),
+  POSTGRES_PORT: Joi.string(),
+
   // Email
   // SMTP_HOST: Joi.string().when('NODE_ENV', {
   //   is: 'production',

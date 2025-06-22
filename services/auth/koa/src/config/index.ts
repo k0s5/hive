@@ -36,6 +36,8 @@ function validateEnv(): Config {
     throw new Error(`Config validation error:\n${errorMessage}`)
   }
 
+  console.log('============ CONFIG:', value)
+
   // Transform a flat structure into a nested one
   return {
     nodeEnv: value.NODE_ENV,
@@ -51,7 +53,7 @@ function validateEnv(): Config {
     },
 
     postgres: {
-      uri: `postgresql://${value.POSTGRES_USER}:${value.POSTGRES_PASS}@${value.POSTGRES_HOST}${value.POSTGRES_PORT}/${value.POSTGRES_DB_NAME}`,
+      uri: `postgresql://${value.POSTGRES_USER}:${value.POSTGRES_PASS}@${value.POSTGRES_HOST}:${value.POSTGRES_PORT}/${value.POSTGRES_DB_NAME}`,
     },
   }
 }
