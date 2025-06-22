@@ -6,7 +6,7 @@ import {
   lastNameSchema,
   passwordSchema,
   usernameSchema,
-} from './entities'
+} from './validators'
 
 // User validation schemas
 export const SigninSchema = z.object({
