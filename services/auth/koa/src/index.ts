@@ -4,13 +4,14 @@ import cors from '@koa/cors'
 import { bodyParser } from '@koa/bodyparser'
 import { PrismaClient } from '@prisma/client'
 import router from './routes'
+import { config } from './config'
 
 const app = new Koa()
 
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASS}@${process.env.POSTGRES_DB_HOST || 'localhost'}:${process.env.POSTGRES_DB_PORT || 5432}/${process.env.POSTGRES_DB_NAME}?schema=public`,
+      url: config.postgres.uri,
     },
   },
 })
@@ -44,6 +45,41 @@ app.use(router.routes())
 // app.use(router.allowedMethods())
 
 const PORT = process.env.PORT || 4001
+
+let isGracefulShutdownStarted = false
+
+async function gracefulShutdown(signal: string) {
+  if (isGracefulShutdownStarted) {
+    return
+  }
+  console.log(`Received ${signal}, shutting down gracefully...`)
+  isGracefulShutdownStarted = true
+
+  if (prisma) {
+    await prisma.$disconnect()
+  }
+
+  process.exit(1)
+
+  // setTimeout(() => {
+  //   console.error('Forced shutdown due to timeout')
+  //   process.exit(1)
+  // }, 5000) // 5 seconds
+}
+
+// Signal handlers
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error)
+  gracefulShutdown('uncaughtException')
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+  gracefulShutdown('unhandledRejection')
+})
 
 app.listen(PORT)
 console.log(`Auth service started on port ${PORT}`)
