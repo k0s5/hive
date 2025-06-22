@@ -26,6 +26,27 @@ export interface TokenPayload {
   userId: string
   email: string
   username?: string
-  iat: number
-  exp: number
+  jti?: string // JWT ID for token tracking
+  sub?: string // Subject (alternative to jti)
+  iat?: number // Issued at
+  exp?: number // Expiration time
+}
+
+export interface AuthResponse {
+  success: boolean
+  data: {
+    user: any
+    accessToken: string
+    refreshToken: string
+  }
+}
+
+export interface RefreshTokenResponse {
+  success: boolean
+  data: AuthTokens
+}
+
+export interface SignoutResponse {
+  success: boolean
+  message: string
 }
