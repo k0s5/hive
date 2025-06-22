@@ -3,6 +3,14 @@ import bcrypt from 'bcryptjs'
 import { config } from './config'
 import { omit, type SigninRequest } from '@hive/shared'
 
+const userResponseFilter = {
+  id: true,
+  email: true,
+  isActive: true,
+  createdAt: true,
+  updatedAt: true,
+}
+
 class AuthService {
   static async signup(ctx: Context) {
     const { email, password } = ctx.request.body as SigninRequest
@@ -12,13 +20,7 @@ class AuthService {
 
     const newUser = await ctx.prisma.user.create({
       data: { email, hash: passwordHash },
-      select: {
-        id: true,
-        email: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: userResponseFilter,
     })
 
     ctx.status = 201
@@ -56,6 +58,7 @@ class AuthService {
 
     const user = await ctx.prisma.user.findUnique({
       where: { id: userId },
+      select: userResponseFilter,
     })
 
     if (!user) {
@@ -65,7 +68,7 @@ class AuthService {
     }
 
     ctx.status = 200
-    ctx.body = omit(user, ['hash'])
+    ctx.body = user
   }
 }
 
