@@ -1,5 +1,6 @@
 packages:
   - 'apps/*'
+  - 'apps/frontend/client/web/spa/*'
   - 'services/*'
   - 'services/auth/*'
   - 'packages/*'
