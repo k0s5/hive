@@ -265,7 +265,7 @@ export class AuthService {
     const payload: Omit<TokenPayload, 'iat' | 'exp'> = {
       userId: user.id,
       email: user.email,
-      username: user.username,
+      ...(user && { username: user.username }),
     }
 
     const accessTokenPayload = {
