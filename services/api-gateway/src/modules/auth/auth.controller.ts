@@ -6,7 +6,7 @@ import {
   UseGuards,
   Request,
   HttpStatus,
-  HttpCode,
+  Delete,
 } from '@nestjs/common'
 import {
   ApiTags,
@@ -49,9 +49,7 @@ export class AuthController {
   }
   //#endregion SIGNUP
 
-  //#region SIGNIN
   @Post(API_ROUTES.AUTH.SIGNIN)
-  @HttpCode(200)
   @Throttle({ short: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @ApiOperation({ summary: 'Sign in user' })
   @ApiResponse({
@@ -65,9 +63,7 @@ export class AuthController {
   async signin(@Body() signinDto: SigninDto) {
     return this.authService.signin(signinDto)
   }
-  //#endregion SIGNIN
 
-  //#region REFRESH
   @Post(API_ROUTES.AUTH.REFRESH)
   @UseGuards(JwtRefreshGuard)
   @ApiOperation({ summary: 'Refresh access token' })
@@ -79,32 +75,43 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid refresh token',
   })
-  async refresh(@Body() refreshTokenDto: RefreshTokenDto, @Request() req: any) {
-    return this.authService.refreshTokens(
-      req.user.userId,
-      refreshTokenDto.refreshToken
-    )
-  }
-  //#endregion REFRESH
+  async refreshToken(@Request() req, @Body() refreshTokenDto: RefreshTokenDto) {
+    const { userId, refreshToken, tokenId } = req.user
 
-  //#region SIGNOUT
-  @Post(API_ROUTES.AUTH.SIGNOUT)
+    const tokens = await this.authService.refreshTokens(
+      userId,
+      refreshToken,
+      tokenId
+    )
+
+    return {
+      success: true,
+      data: tokens,
+    }
+  }
+
+  @Delete(API_ROUTES.AUTH.SIGNOUT)
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Sign out user' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User successfully signed out',
   })
-  async signout(@Request() req: any) {
-    return this.authService.signout(req.user.userId)
-  }
-  //#endregion SIGNOUT
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid token',
+  })
+  async signout(@Request() req) {
+    const user = req.user
+    const token = user.currentToken
 
-  //#region ME
+    return this.authService.signout(user.id, token)
+  }
+
   @Get(API_ROUTES.AUTH.ME)
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -112,14 +119,13 @@ export class AuthController {
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
-    description: 'Invalid or expired token',
+    description: 'Invalid token',
   })
-  async me(@Request() req: any) {
+  async getProfile(@Request() req) {
     return {
       success: true,
       data: req.user,
     }
-    // return this.authService.me(req.user.userId)
+    //return this.authService.getProfile(req.user.id)
   }
-  //#endregion ME
 }

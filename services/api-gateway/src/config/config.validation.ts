@@ -20,7 +20,8 @@ export const configValidationSchema = Joi.object({
   REDIS_HOST: Joi.string().default('localhost'),
   REDIS_PORT: Joi.number().port().default(6379),
   REDIS_PASSWORD: Joi.string().optional(),
-  REDIS_DB: Joi.number().min(0).max(15).default(0),
+  REDIS_DB: Joi.number().min(0).max(15).default(0), // For auth/tokens
+  REDIS_CACHE_DB: Joi.number().min(0).max(15).default(1), // For general caching
 
   // Microservices URLs
   AUTH_SERVICE_URL: Joi.string().uri().required(),
@@ -35,4 +36,7 @@ export const configValidationSchema = Joi.object({
   // File upload
   MAX_FILE_SIZE: Joi.number().positive().default(10485760), // 10MB
   UPLOAD_DEST: Joi.string().default('./uploads'),
+
+  // User
+  USER_CHACHE_EXPIRES_IN: Joi.number().default(604800),
 })

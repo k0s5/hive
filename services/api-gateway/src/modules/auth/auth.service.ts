@@ -1,15 +1,18 @@
 import {
   Injectable,
   UnauthorizedException,
-  BadGatewayException,
   Logger,
+  BadRequestException,
 } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
+import { ConfigService } from '@nestjs/config'
 import { HttpService } from '@nestjs/axios'
+import { RedisService } from '../redis/redis.service'
 import { firstValueFrom } from 'rxjs'
-import { SigninDto, SignupDto } from './dto'
-import { API_ROUTES, type AuthTokens, type TokenPayload } from '@hive/shared'
+import { SignupDto } from './dto/signup.dto'
+import { SigninDto } from './dto/signin.dto'
+import { API_ROUTES, TokenPayload, AuthTokens } from '@hive/shared'
+import { v4 as uuidv4 } from 'uuid'
 
 @Injectable()
 export class AuthService {
@@ -18,10 +21,12 @@ export class AuthService {
 
   constructor(
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService
+    private readonly redisService: RedisService
   ) {
-    this.authServiceUrl = this.configService.get<string>('AUTH_SERVICE_URL')!
+    this.authServiceUrl =
+      this.configService.get<string>('AUTH_SERVICE_URL') || ''
   }
 
   async signup(signupDto: SignupDto) {
@@ -36,11 +41,26 @@ export class AuthService {
       const user = response.data
       const tokens = await this.generateTokens(user)
 
+      // Store refresh token in Redis
+      const refreshTokenPayload = this.jwtService.decode(
+        tokens.refreshToken
+      ) as any
+      const tokenId = refreshTokenPayload.jti
+      const refreshExpiresIn = this.getTokenExpirationTime(
+        'JWT_REFRESH_EXPIRES_IN'
+      )
+
+      await this.redisService.storeRefreshToken(
+        user.id,
+        tokenId,
+        refreshExpiresIn
+      )
+
       return {
         success: true,
         data: {
           user,
-          tokens,
+          ...tokens,
         },
       }
     } catch (error) {
@@ -51,16 +71,6 @@ export class AuthService {
 
   async signin(signinDto: SigninDto) {
     try {
-      // return {
-      //   success: true,
-      //   data: {
-      //     user: { id: 1, email: 'a@a.ru', username: 'aaa' },
-      //     tokens: {
-      //       accessToken: 'aaaa',
-      //       refreshToken: 'bbbbb',
-      //     },
-      //   },
-      // }
       const response = await firstValueFrom(
         this.httpService.post(
           `${this.authServiceUrl}${API_ROUTES.AUTH.SIGNIN}`,
@@ -69,20 +79,38 @@ export class AuthService {
       )
 
       const user = response.data
-
       const tokens = await this.generateTokens(user)
+
+      // Store refresh token in Redis
+      const refreshTokenPayload = this.jwtService.decode(
+        tokens.refreshToken
+      ) as any
+      const tokenId = refreshTokenPayload.jti
+      const refreshExpiresIn = this.getTokenExpirationTime(
+        'JWT_REFRESH_EXPIRES_IN'
+      )
+
+      await this.redisService.storeRefreshToken(
+        user.id,
+        tokenId,
+        refreshExpiresIn
+      )
+
+      // Cache user data
+      await this.redisService.cacheUser(user.id, user, 300) // 5 minutes
 
       return {
         success: true,
         data: {
           user,
-          tokens,
+          ...tokens,
         },
       }
     } catch (error) {
-      if (error.code === 'ECONNREFUSED') {
-        this.logger.error('Server is not respond')
-        throw new BadGatewayException('Server is not respond')
+      if (error.response?.status === 401) {
+        throw new UnauthorizedException('Invalid credentials')
+      } else if (error.response?.status === 404) {
+        throw new UnauthorizedException('User not found. Please sign up first')
       } else {
         this.logger.error(
           'Signin failed',
@@ -95,35 +123,81 @@ export class AuthService {
 
   async refreshTokens(
     userId: string,
-    refreshToken: string
+    refreshToken: string,
+    tokenId: string
   ): Promise<AuthTokens> {
     try {
-      // Verify refresh token
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      }) as TokenPayload
-
-      if (payload.userId !== userId) {
-        throw new UnauthorizedException('Invalid refresh token')
-      }
-
-      // Get user data from auth service
-      const response = await firstValueFrom(
-        this.httpService.get(`${this.authServiceUrl}${API_ROUTES.AUTH.ME}`)
+      // Verify refresh token exists in Redis
+      const isValidRefreshToken = await this.redisService.isRefreshTokenValid(
+        userId,
+        tokenId
       )
 
-      const user = response.data
-      return await this.generateTokens(user)
+      if (!isValidRefreshToken) {
+        throw new UnauthorizedException('Refresh token not found or expired')
+      }
+
+      // Revoke old refresh token
+      await this.redisService.revokeRefreshToken(userId, tokenId)
+
+      // Get user data from cache or auth service
+      let user = await this.redisService.getCachedUser(userId)
+      if (!user) {
+        const response = await firstValueFrom(
+          this.httpService.get(
+            `${this.authServiceUrl}${API_ROUTES.AUTH.ME}/${userId}`
+          )
+        )
+        user = response.data
+        await this.redisService.cacheUser(
+          userId,
+          user,
+          this.configService.get<number>('USER_CHACHE_EXPIRES_IN')
+        )
+      }
+
+      // Generate new tokens
+      const newTokens = await this.generateTokens(user)
+
+      // Store new refresh token in Redis
+      const newRefreshTokenPayload = this.jwtService.decode(
+        newTokens.refreshToken
+      ) as any
+      const newTokenId = newRefreshTokenPayload.jti
+      const refreshExpiresIn = this.getTokenExpirationTime(
+        'JWT_REFRESH_EXPIRES_IN'
+      )
+
+      await this.redisService.storeRefreshToken(
+        userId,
+        newTokenId,
+        refreshExpiresIn
+      )
+
+      return newTokens
     } catch (error) {
       this.logger.error('Token refresh failed', error.message)
       throw new UnauthorizedException('Invalid refresh token')
     }
   }
 
-  async signout(userId: string) {
+  async signout(userId: string, token?: string) {
     try {
-      // Here you could implement token blacklisting
-      // For now, just return success
+      // Blacklist current access token if provided
+      if (token) {
+        const tokenPayload = this.jwtService.decode(token) as any
+        const expiresIn = tokenPayload.exp - Math.floor(Date.now() / 1000)
+        if (expiresIn > 0) {
+          await this.redisService.blacklistToken(token, expiresIn)
+        }
+      }
+
+      // Revoke all refresh tokens for user
+      await this.redisService.revokeAllRefreshTokens(userId)
+
+      // Clear user cache
+      await this.redisService.invalidateUserCache(userId)
+
       return {
         success: true,
         message: 'Successfully signed out',
@@ -134,22 +208,22 @@ export class AuthService {
     }
   }
 
-  async me(userId: string) {
+  async getProfile(userId: string) {
     try {
-      const response = await firstValueFrom(
-        this.httpService.get(
-          `${this.authServiceUrl}${API_ROUTES.AUTH.ME}/${userId}`,
-          {
-            headers: {
-              'x-user-id': userId,
-            },
-          }
+      // Try cache first
+      let user = await this.redisService.getCachedUser(userId)
+
+      if (!user) {
+        const response = await firstValueFrom(
+          this.httpService.get(`${this.authServiceUrl}/users/${userId}`)
         )
-      )
+        user = response.data
+        await this.redisService.cacheUser(userId, user, 300)
+      }
 
       return {
         success: true,
-        data: response.data,
+        data: user,
       }
     } catch (error) {
       this.logger.error(
@@ -160,28 +234,25 @@ export class AuthService {
     }
   }
 
-  async getSelf(payload: TokenPayload) {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.get(
-          `${this.authServiceUrl}${API_ROUTES.AUTH.ME}/${payload.userId}`
-        )
-      )
-
-      return response.data
-    } catch (error) {
-      this.logger.error('User self validation failed', error.message)
-      return null
-    }
-  }
-
+  //#region For inner usage
   async validateUser(payload: TokenPayload) {
     try {
-      const response = await firstValueFrom(
-        this.httpService.get(`${this.authServiceUrl}/users/${payload.userId}`)
-      )
+      // Try cache first
+      let user = await this.redisService.getCachedUser(payload.userId)
 
-      return response.data
+      if (!user) {
+        const response = await firstValueFrom(
+          this.httpService.get(
+            `${this.authServiceUrl}${API_ROUTES.AUTH.ME}/${payload.userId}`
+          )
+        )
+        user = response.data
+
+        // Cache user for 5 minutes
+        await this.redisService.cacheUser(payload.userId, user, 300)
+      }
+
+      return user
     } catch (error) {
       this.logger.error('User validation failed', error.message)
       return null
@@ -189,18 +260,30 @@ export class AuthService {
   }
 
   private async generateTokens(user: any): Promise<AuthTokens> {
+    const tokenId = uuidv4()
+
     const payload: Omit<TokenPayload, 'iat' | 'exp'> = {
       userId: user.id,
       email: user.email,
-      ...(user && { username: user.username }),
+      username: user.username,
+    }
+
+    const accessTokenPayload = {
+      ...payload,
+      jti: tokenId,
+    }
+
+    const refreshTokenPayload = {
+      ...payload,
+      jti: tokenId,
     }
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
+      this.jwtService.signAsync(accessTokenPayload, {
         secret: this.configService.get<string>('JWT_SECRET'),
         expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
       }),
-      this.jwtService.signAsync(payload, {
+      this.jwtService.signAsync(refreshTokenPayload, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
         expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
       }),
@@ -211,4 +294,23 @@ export class AuthService {
       refreshToken,
     }
   }
+
+  private getTokenExpirationTime(configKey: string): number {
+    const expiresIn = this.configService.get<string>(configKey)
+
+    // Convert JWT expiration format to seconds
+    if (expiresIn?.endsWith('d')) {
+      return parseInt(expiresIn) * 24 * 60 * 60
+    } else if (expiresIn?.endsWith('h')) {
+      return parseInt(expiresIn) * 60 * 60
+    } else if (expiresIn?.endsWith('m')) {
+      return parseInt(expiresIn) * 60
+    } else if (expiresIn?.endsWith('s')) {
+      return parseInt(expiresIn)
+    } else {
+      // Default to seconds
+      return parseInt(expiresIn || '0')
+    }
+  }
+  //#endregion For inner usage
 }
