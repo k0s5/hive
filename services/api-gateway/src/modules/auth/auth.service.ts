@@ -97,7 +97,11 @@ export class AuthService {
       )
 
       // Cache user data
-      await this.redisService.cacheUser(user.id, user, 300) // 5 minutes
+      await this.redisService.cacheUser(
+        user.id,
+        user,
+        this.configService.get<number>('USER_CACHE_EXPIRES_IN')
+      )
 
       return {
         success: true,
@@ -218,7 +222,11 @@ export class AuthService {
           this.httpService.get(`${this.authServiceUrl}/users/${userId}`)
         )
         user = response.data
-        await this.redisService.cacheUser(userId, user, 300)
+        await this.redisService.cacheUser(
+          userId,
+          user,
+          this.configService.get<number>('USER_CACHE_EXPIRES_IN')
+        )
       }
 
       return {
@@ -248,8 +256,12 @@ export class AuthService {
         )
         user = response.data
 
-        // Cache user for 5 minutes
-        await this.redisService.cacheUser(payload.userId, user, 300)
+        // Cache user
+        await this.redisService.cacheUser(
+          payload.userId,
+          user,
+          this.configService.get<number>('USER_CACHE_EXPIRES_IN')
+        )
       }
 
       return user
