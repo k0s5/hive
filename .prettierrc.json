@@ -13,7 +13,7 @@
   "jsxSingleQuote": true,
   "embeddedLanguageFormatting": "auto",
   "htmlWhitespaceSensitivity": "css",
-  "vueIndentScriptAndStyle": true,
+  "vueIndentScriptAndStyle": false,
   "overrides": [
     {
       "files": "*.md",
@@ -31,7 +31,7 @@
     {
       "files": "*.vue",
       "options": {
-        "singleQuote": false
+        "singleQuote": true
       }
     }
   ]
