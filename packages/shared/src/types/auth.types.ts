@@ -1,21 +1,22 @@
+import { ApiResponse } from './api.types'
 import type { User } from './user.types'
 
-export interface SignupRequest {
+export interface SignupRequestPayload {
   email: string
   password: string
 }
 
-export interface SignupResponse {
+export interface SignupResponsePayload {
   user: User
   tokens: AuthTokens
 }
 
-export interface SigninRequest {
+export interface SigninRequestPayload {
   email: string
   password: string
 }
 
-export interface SigninResponse extends SignupResponse {}
+export interface SigninResponsePayload extends SignupResponsePayload {}
 
 export interface AuthTokens {
   accessToken: string
@@ -32,21 +33,13 @@ export interface TokenPayload {
   exp?: number // Expiration time
 }
 
-export interface AuthResponse {
-  success: boolean
-  data: {
-    user: any
-    accessToken: string
-    refreshToken: string
-  }
-}
+// Api responses
+export interface AuthResponseDto
+  extends ApiResponse<SigninResponsePayload | SignupResponsePayload> {}
 
-export interface RefreshTokenResponse {
-  success: boolean
-  data: AuthTokens
-}
+export interface RefreshTokenResponseDto
+  extends ApiResponse<{ user: User; tokens: AuthTokens }> {}
 
-export interface SignoutResponse {
-  success: boolean
+export interface SignoutResponseDto extends ApiResponse {
   message: string
 }
