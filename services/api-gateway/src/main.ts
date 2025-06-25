@@ -1,14 +1,13 @@
 import { NestFactory } from '@nestjs/core'
-import { CustomValidationPipe } from './common/pipes/custom-validation.pipe'
 import { ConfigService } from '@nestjs/config'
 import { AppModule } from './app.module'
-import { setupSwagger } from './config/swagger.config'
+import { CustomValidationPipe } from './common/pipes/custom-validation.pipe'
 import {
   AllExceptionsFilter,
   ValidationExceptionFilter,
 } from './common/filters'
-import { ResponseInterceptor } from './common/interceptors/response.interceptor'
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor'
+import { LoggingInterceptor, ResponseInterceptor } from './common/interceptors'
+import { setupSwagger } from './config/swagger.config'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
