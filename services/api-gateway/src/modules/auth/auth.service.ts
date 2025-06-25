@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  Logger,
-  BadRequestException,
-} from '@nestjs/common'
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { HttpService } from '@nestjs/axios'
@@ -11,7 +6,7 @@ import { RedisService } from '../redis/redis.service'
 import { firstValueFrom } from 'rxjs'
 import { SignupDto } from './dto/signup.dto'
 import { SigninDto } from './dto/signin.dto'
-import { API_ROUTES, TokenPayload, AuthTokens } from '@hive/shared'
+import { API_ROUTES, TokenPayload, AuthTokens, User } from '@hive/shared'
 import { v4 as uuidv4 } from 'uuid'
 
 @Injectable()
@@ -57,11 +52,8 @@ export class AuthService {
       )
 
       return {
-        success: true,
-        data: {
-          user,
-          ...tokens,
-        },
+        user,
+        tokens,
       }
     } catch (error) {
       this.logger.error('Signup failed', error.response?.data || error.message)
@@ -103,12 +95,10 @@ export class AuthService {
         this.configService.get<number>('USER_CACHE_EXPIRES_IN')
       )
 
+      // Data is wrap to ApiResponse in ResponseInterceptor
       return {
-        success: true,
-        data: {
-          user,
-          ...tokens,
-        },
+        user,
+        tokens,
       }
     } catch (error) {
       if (error.response?.status === 401) {
@@ -129,17 +119,17 @@ export class AuthService {
     userId: string,
     refreshToken: string,
     tokenId: string
-  ): Promise<AuthTokens> {
+  ): Promise<{ user: User; tokens: AuthTokens }> {
     try {
       // Verify refresh token exists in Redis
-      const isValidRefreshToken = await this.redisService.isRefreshTokenValid(
-        userId,
-        tokenId
-      )
+      // const isValidRefreshToken = await this.redisService.isRefreshTokenValid(
+      //   userId,
+      //   tokenId
+      // )
 
-      if (!isValidRefreshToken) {
-        throw new UnauthorizedException('Refresh token not found or expired')
-      }
+      // if (!isValidRefreshToken) {
+      //   throw new UnauthorizedException('Refresh token not found or expired')
+      // }
 
       // Revoke old refresh token
       await this.redisService.revokeRefreshToken(userId, tokenId)
@@ -156,7 +146,7 @@ export class AuthService {
         await this.redisService.cacheUser(
           userId,
           user,
-          this.configService.get<number>('USER_CHACHE_EXPIRES_IN')
+          this.configService.get<number>('USER_CACHE_EXPIRES_IN')
         )
       }
 
@@ -178,7 +168,10 @@ export class AuthService {
         refreshExpiresIn
       )
 
-      return newTokens
+      return {
+        user,
+        tokens: newTokens,
+      }
     } catch (error) {
       this.logger.error('Token refresh failed', error.message)
       throw new UnauthorizedException('Invalid refresh token')
@@ -203,7 +196,6 @@ export class AuthService {
       await this.redisService.invalidateUserCache(userId)
 
       return {
-        success: true,
         message: 'Successfully signed out',
       }
     } catch (error) {
@@ -230,8 +222,7 @@ export class AuthService {
       }
 
       return {
-        success: true,
-        data: user,
+        user,
       }
     } catch (error) {
       this.logger.error(

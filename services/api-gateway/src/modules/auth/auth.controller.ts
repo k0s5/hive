@@ -21,7 +21,7 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard'
 import { SignupDto } from './dto/signup.dto'
 import { SigninDto } from './dto/signin.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'
-import { API_ROUTES } from '@hive/shared'
+import { API_ROUTES, AuthTokens, User } from '@hive/shared'
 
 @ApiTags('Auth')
 @Controller()
@@ -78,7 +78,13 @@ export class AuthController {
   async refreshToken(@Request() req, @Body() refreshTokenDto: RefreshTokenDto) {
     const { userId, refreshToken, tokenId } = req.user
 
-    const tokens = await this.authService.refreshTokens(
+    // const tokens = await this.authService.refreshTokens(
+    //   userId,
+    //   refreshToken,
+    //   tokenId
+    // )
+
+    const res = await this.authService.refreshTokens(
       userId,
       refreshToken,
       tokenId
@@ -86,7 +92,11 @@ export class AuthController {
 
     return {
       success: true,
-      data: tokens,
+      // data: tokens,
+      data: {
+        user: res.user,
+        tokens: res.tokens,
+      },
     }
   }
 
