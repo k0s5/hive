@@ -1,10 +1,17 @@
 <script setup lang="ts">
-// import useAppStore from '@/shared/store/app'
-// import { storeToRefs } from 'pinia'
-
-// const appStore = useAppStore()
+import { MainLayout } from './layouts'
+import { Sidebar } from '@widgets/sidebar'
+import { ChatWindow } from '@widgets/chat'
+import { ChatList } from '@/widgets/chat'
 </script>
 
 <template>
-  <div>Home</div>
+  <MainLayout>
+    <template #sidebar>
+      <Sidebar>
+        <ChatList />
+      </Sidebar>
+    </template>
+    <ChatWindow />
+  </MainLayout>
 </template>
