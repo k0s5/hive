@@ -9,8 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hive/shared": "workspace:*",
     "@primeuix/themes": "^1.1.2",
     "@primevue/forms": "^4.3.5",
+    "date-fns": "^4.1.0",
     "pinia": "^3.0.3",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.5",
@@ -18,7 +20,6 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@hive/shared": "workspace:*",
     "@primevue/auto-import-resolver": "^4.3.5",
     "@tailwindcss/vite": "^4.1.10",
     "@vitejs/plugin-vue": "^5.2.3",
