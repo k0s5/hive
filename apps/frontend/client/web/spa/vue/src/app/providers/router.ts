@@ -53,6 +53,12 @@ const routes: readonly RouteRecordRaw[] = [
     beforeEnter: requireAuthGuard,
   },
   {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('../../pages/SettingsPage.vue'),
+    beforeEnter: isAuthorizedGuard,
+  },
+  {
     path: '/signup',
     name: 'signup',
     component: () => import('../../pages/SignupPage.vue'),
