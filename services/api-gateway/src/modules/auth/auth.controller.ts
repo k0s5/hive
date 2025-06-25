@@ -21,14 +21,14 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard'
 import { SignupDto } from './dto/signup.dto'
 import { SigninDto } from './dto/signin.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'
-import { API_ROUTES, AuthTokens, User } from '@hive/shared'
+import { API_ROUTES } from '@hive/shared'
 
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  //#region SIGNUP
+  /*#region SIGNUP*/
   @Post(API_ROUTES.AUTH.SIGNUP)
   @Throttle({ short: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @ApiOperation({ summary: 'Register a new user' })
@@ -47,8 +47,9 @@ export class AuthController {
   async signup(@Body() signupDto: SignupDto) {
     return this.authService.signup(signupDto)
   }
-  //#endregion SIGNUP
+  /*#endregion SIGNUP*/
 
+  /*#region SIGNIN*/
   @Post(API_ROUTES.AUTH.SIGNIN)
   @Throttle({ short: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @ApiOperation({ summary: 'Sign in user' })
@@ -63,7 +64,9 @@ export class AuthController {
   async signin(@Body() signinDto: SigninDto) {
     return this.authService.signin(signinDto)
   }
+  /*#endregion SIGNIN*/
 
+  /*#region REFRESH*/
   @Post(API_ROUTES.AUTH.REFRESH)
   @UseGuards(JwtRefreshGuard)
   @ApiOperation({ summary: 'Refresh access token' })
@@ -78,12 +81,6 @@ export class AuthController {
   async refreshToken(@Request() req, @Body() refreshTokenDto: RefreshTokenDto) {
     const { userId, refreshToken, tokenId } = req.user
 
-    // const tokens = await this.authService.refreshTokens(
-    //   userId,
-    //   refreshToken,
-    //   tokenId
-    // )
-
     const res = await this.authService.refreshTokens(
       userId,
       refreshToken,
@@ -91,15 +88,13 @@ export class AuthController {
     )
 
     return {
-      success: true,
-      // data: tokens,
-      data: {
-        user: res.user,
-        tokens: res.tokens,
-      },
+      user: res.user,
+      tokens: res.tokens,
     }
   }
+  /*#endregion REFRESH*/
 
+  /*#region SIGNOUT*/
   @Delete(API_ROUTES.AUTH.SIGNOUT)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -118,7 +113,9 @@ export class AuthController {
 
     return this.authService.signout(user.id, token)
   }
+  /*#endregion SIGNOUT*/
 
+  /*#region ME*/
   @Get(API_ROUTES.AUTH.ME)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -138,4 +135,5 @@ export class AuthController {
     }
     //return this.authService.getProfile(req.user.id)
   }
+  /*#endregion ME*/
 }
