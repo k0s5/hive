@@ -1,8 +1,64 @@
+/* Order */
+@layer hive, primevue;
+
 :root {
+  --p-surface-ground: var(--p-surface-0);
+  --p-card-background: var(--p-background-900);
+
+  --p-background-50: var(--p-surface-950);
+  --p-background-100: var(--p-surface-900);
+  --p-background-200: var(--p-surface-800);
+  --p-background-300: var(--p-surface-700);
+  --p-background-400: var(--p-surface-600);
+  --p-background-500: var(--p-surface-500);
+  --p-background-600: var(--p-surface-400);
+  --p-background-700: var(--p-surface-300);
+  --p-background-800: var(--p-surface-200);
+  --p-background-900: var(--p-surface-100);
+  --p-background-950: var(--p-surface-50);
 }
 
 html,
 body {
+  background-color: var(--p-surface-ground);
   margin: 0;
   padding: 0;
+  height: 100%;
+  font-family:
+    'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+}
+
+a {
+  color: var(--p-primary-400);
+}
+
+.chat-item__image {
+  min-width: 3rem;
+  min-height: 3rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 20rem;
+  background-color: var(--p-primary-400);
+}
+
+.dark {
+  --p-surface-ground: var(--p-surface-950);
+  --p-card-background: var(--p-background-900);
+
+  --p-background-50: var(--p-surface-50);
+  --p-background-100: var(--p-surface-100);
+  --p-background-200: var(--p-surface-200);
+  --p-background-300: var(--p-surface-300);
+  --p-background-400: var(--p-surface-400);
+  --p-background-500: var(--p-surface-500);
+  --p-background-600: var(--p-surface-600);
+  --p-background-700: var(--p-surface-700);
+  --p-background-800: var(--p-surface-800);
+  --p-background-900: var(--p-surface-900);
+  --p-background-950: var(--p-surface-950);
 }
