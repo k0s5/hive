@@ -1,10 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
-import { ExtractJwt, Strategy } from 'passport-jwt'
 import { ConfigService } from '@nestjs/config'
-import { RedisService } from '../../redis/redis.service'
 import { TokenPayload } from '@hive/shared'
 import { JwtService } from '@nestjs/jwt'
+import { ExtractJwt, Strategy } from 'passport-jwt'
+import { RedisService } from '../../redis/redis.service'
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -55,7 +55,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
     )
 
     if (!isValidRefreshToken) {
-      throw new UnauthorizedException('Refresh token not found or expired')
+      throw new UnauthorizedException('Refresh token is expired')
     }
 
     return {
