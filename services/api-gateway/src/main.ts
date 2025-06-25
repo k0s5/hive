@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core'
-import { ValidationPipe } from '@nestjs/common'
+import { CustomValidationPipe } from './common/pipes/custom-validation.pipe'
 import { ConfigService } from '@nestjs/config'
 import { AppModule } from './app.module'
 import { setupSwagger } from './config/swagger.config'
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'
+import {
+  AllExceptionsFilter,
+  ValidationExceptionFilter,
+} from './common/filters'
 import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor'
 
@@ -20,17 +23,13 @@ async function bootstrap() {
   })
 
   // Global pipes
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      disableErrorMessages: configService.get('NODE_ENV') === 'production',
-    })
-  )
+  app.useGlobalPipes(new CustomValidationPipe())
 
   // Global filters
-  app.useGlobalFilters(new AllExceptionsFilter())
+  app.useGlobalFilters(
+    new AllExceptionsFilter(),
+    new ValidationExceptionFilter()
+  )
 
   // Global interceptors
   app.useGlobalInterceptors(new ResponseInterceptor(), new LoggingInterceptor())
