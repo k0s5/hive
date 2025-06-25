@@ -1,7 +1,7 @@
 import type { Context } from 'koa'
 import bcrypt from 'bcryptjs'
 import { config } from './config'
-import { omit, type SigninRequest } from '@hive/shared'
+import { omit, type SigninRequestPayload } from '@hive/shared'
 
 const userResponseFilter = {
   id: true,
@@ -13,7 +13,7 @@ const userResponseFilter = {
 
 class AuthService {
   static async signup(ctx: Context) {
-    const { email, password } = ctx.request.body as SigninRequest
+    const { email, password } = ctx.request.body as SigninRequestPayload
 
     const salt = await bcrypt.genSalt(config.saltRounds)
     const passwordHash = await bcrypt.hash(password, salt)
@@ -29,7 +29,7 @@ class AuthService {
 
   static async signin(ctx: Context) {
     const { email, password: candidatePassword } = ctx.request
-      .body as SigninRequest
+      .body as SigninRequestPayload
 
     const user = await ctx.prisma.user.findUnique({
       where: { email },
