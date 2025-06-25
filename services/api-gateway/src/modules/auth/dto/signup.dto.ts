@@ -1,43 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger'
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-  MaxLength,
-  Matches,
-} from 'class-validator'
-import { VALIDATION_RULES, ERROR_MESSAGES } from '@hive/shared'
+import { IsValidEmail, IsValidPassword } from '../decorators'
 
 export class SignupDto {
-  @ApiProperty({
-    description: 'User email address',
-    example: 'john@example.com',
-  })
-  @IsEmail({}, { message: ERROR_MESSAGES.COMMON.INVALID_FORMAT('Email') })
+  @IsValidEmail()
   email: string
 
-  @ApiProperty({
-    description: 'User password',
-    example: 'Password123',
-    minLength: VALIDATION_RULES.AUTH.PASSWORD_MIN_LENGTH,
-    maxLength: VALIDATION_RULES.AUTH.PASSWORD_MAX_LENGTH,
-  })
-  @IsString()
-  @MinLength(VALIDATION_RULES.AUTH.PASSWORD_MIN_LENGTH, {
-    message: ERROR_MESSAGES.COMMON.MIN_LENGTH(
-      'Password',
-      VALIDATION_RULES.AUTH.PASSWORD_MIN_LENGTH
-    ),
-  })
-  @MaxLength(VALIDATION_RULES.AUTH.PASSWORD_MAX_LENGTH, {
-    message: ERROR_MESSAGES.COMMON.MIN_LENGTH(
-      'Password',
-      VALIDATION_RULES.AUTH.PASSWORD_MAX_LENGTH
-    ),
-  })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]/, {
-    message: ERROR_MESSAGES.AUTH.PASSWORD_MATCH,
-  })
+  @IsValidPassword()
   password: string
 
   // @ApiProperty({
