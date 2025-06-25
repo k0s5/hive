@@ -7,11 +7,19 @@ import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), tailwindcss(), Components({
-    resolvers: [
-      PrimeVueResolver()
-    ]
-  })],
+  plugins: [
+    vue(),
+    tailwindcss(),
+    Components({
+      resolvers: [PrimeVueResolver()],
+    }),
+  ],
+  server: {
+    port: 5000,
+  },
+  preview: {
+    port: 5001,
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -20,7 +28,18 @@ export default defineConfig({
       '@features': path.resolve(__dirname, './src/features'),
       '@entities': path.resolve(__dirname, './src/entities'),
       '@shared': path.resolve(__dirname, './src/shared'),
-      '@types': path.resolve(__dirname, './src/shared/types')
-    }
-  }
+      '@types': path.resolve(__dirname, './src/shared/types'),
+    },
+  },
+  optimizeDeps: {
+    include: ['@hive/shared'],
+    esbuildOptions: {
+      target: 'es2022',
+    },
+  },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+  },
 })
