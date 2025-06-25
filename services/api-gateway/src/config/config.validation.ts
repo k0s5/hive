@@ -38,5 +38,5 @@ export const configValidationSchema = Joi.object({
   UPLOAD_DEST: Joi.string().default('./uploads'),
 
   // User
-  USER_CHACHE_EXPIRES_IN: Joi.number().default(604800),
+  USER_CACHE_EXPIRES_IN: Joi.number().default(1800),
 })
