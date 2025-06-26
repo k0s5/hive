@@ -1,3 +1,4 @@
+// services/chat/koa/src/model/schema.prisma
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -11,4 +12,344 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("POSTGRES_DB_URI")
+}
+
+// Chat types enum
+enum ChatType {
+  DIRECT
+  GROUP
+}
+
+// Message types enum
+enum MessageType {
+  TEXT
+  LINK
+  IMAGE
+  VIDEO
+  AUDIO
+  VOICE
+  DOCUMENT
+  STICKER
+  GIF
+  LOCATION
+  CONTACT
+  POLL
+  SYSTEM
+  SERVICE
+}
+
+// Message status enum
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  DELETED
+}
+
+// Attachment types enum
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  VOICE
+  STICKER
+  GIF
+}
+
+// Participant roles enum
+enum ParticipantRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// System action types enum
+enum SystemActionType {
+  USER_JOINED
+  USER_LEFT
+  USER_ADDED
+  USER_REMOVED
+  CHAT_CREATED
+  CHAT_TITLE_CHANGED
+  CHAT_PHOTO_CHANGED
+  MESSAGE_PINNED
+  MESSAGE_UNPINNED
+  CALL_STARTED
+  CALL_ENDED
+}
+
+// Formatting types enum
+enum FormattingType {
+  BOLD
+  ITALIC
+  UNDERLINE
+  STRIKETHROUGH
+  CODE
+  PRE
+  LINK
+  MENTION
+  HASHTAG
+  SPOILER
+}
+
+// Chat model
+model Chat {
+  id          String   @id @default(uuid())
+  type        ChatType
+  name        String?
+  description String?
+  avatar      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  participants ChatParticipant[]
+  messages     Message[]
+
+  @@index([type])
+  @@index([createdAt])
+  @@map("chats")
+}
+
+// Chat participants junction table
+model ChatParticipant {
+  id       String          @id @default(uuid())
+  chatId   String
+  userId   String
+  role     ParticipantRole @default(MEMBER)
+  joinedAt DateTime        @default(now())
+  leftAt   DateTime?
+
+  // Relations
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+  @@index([userId])
+  @@index([chatId])
+  @@map("chat_participants")
+}
+
+// Messages model
+model Message {
+  id                String        @id @default(uuid())
+  chatId            String
+  userId            String
+  text              String?
+  type              MessageType
+  status            MessageStatus @default(SENDING)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  editedAt          DateTime?
+  deletedAt         DateTime?
+  replyToMessageId  String?
+  isPinned          Boolean       @default(false)
+  isEdited          Boolean       @default(false)
+  isDeleted         Boolean       @default(false)
+
+  // Relations
+  chat               Chat                        @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  replyToMessage     Message?                    @relation("MessageReplies", fields: [replyToMessageId], references: [id])
+  replies            Message[]                   @relation("MessageReplies")
+  attachments        Attachment[]
+  reactions          MessageReaction[]
+  mentions           MessageMention[]
+  readReceipts       MessageReadReceipt[]
+  forwardedFrom      MessageForward?
+  metadata           MessageMetadata?
+  formattingEntities MessageFormattingEntity[]
+
+  @@index([chatId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type])
+  @@index([status])
+  @@index([isDeleted])
+  @@map("messages")
+}
+
+// Message attachments
+model Attachment {
+  id           String         @id @default(uuid())
+  messageId    String
+  type         AttachmentType
+  url          String
+  thumbnailUrl String?
+  fileName     String?
+  fileSize     Int?
+  mimeType     String?
+  width        Int?
+  height       Int?
+  duration     Int? // Duration in seconds for video/audio
+  caption      String?
+  metadata     Json? // Additional metadata as JSON
+  createdAt    DateTime       @default(now())
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([type])
+  @@map("attachments")
+}
+
+// Message reactions
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+  @@map("message_reactions")
+}
+
+// Message mentions
+model MessageMention {
+  id         String @id @default(uuid())
+  messageId  String
+  userId     String
+  username   String
+  startIndex Int
+  endIndex   Int
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([userId])
+  @@map("message_mentions")
+}
+
+// Message read receipts
+model MessageReadReceipt {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+  @@map("message_read_receipts")
+}
+
+// Message forward information
+model MessageForward {
+  id             String   @id @default(uuid())
+  messageId      String   @unique
+  fromUserId     String
+  fromChatId     String?
+  fromMessageId  String
+  forwardedAt    DateTime @default(now())
+  originalDate   DateTime
+  fromUserName   String?
+  fromChatName   String?
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([fromUserId])
+  @@index([fromChatId])
+  @@map("message_forwards")
+}
+
+// Message metadata for complex message types
+model MessageMetadata {
+  id        String @id @default(uuid())
+  messageId String @unique
+
+  // Voice message fields
+  voiceWaveform Json? // Array of numbers for waveform
+  voiceDuration Int?  // Duration in seconds
+
+  // Location fields
+  locationLatitude  Float?
+  locationLongitude Float?
+  locationAccuracy  Float?
+  locationAddress   String?
+
+  // Contact fields
+  contactPhoneNumber String?
+  contactFirstName   String?
+  contactLastName    String?
+  contactUserId      String?
+  contactVcard       String?
+
+  // Poll fields
+  pollQuestion          String?
+  pollIsAnonymous       Boolean?
+  pollIsMultipleChoice  Boolean?
+  pollIsClosed          Boolean?
+  pollCorrectOptionId   String?
+  pollTotalVoters       Int?
+
+  // System action fields
+  systemActionType         SystemActionType?
+  systemActionUserId       String?
+  systemActionTargetUserId String?
+  systemActionText         String?
+
+  // Link preview fields
+  linkPreviewUrl         String?
+  linkPreviewTitle       String?
+  linkPreviewDescription String?
+  linkPreviewImageUrl    String?
+  linkPreviewSiteName    String?
+
+  // Additional JSON metadata for extensibility
+  additionalData Json?
+
+  // Relations
+  message     Message              @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  pollOptions MessagePollOption[]
+
+  @@map("message_metadata")
+}
+
+// Poll options for poll messages
+model MessagePollOption {
+  id               String @id @default(uuid())
+  messageMetadataId String
+  optionText       String
+  voterCount       Int    @default(0)
+  voterUserIds     Json? // Array of user IDs who voted for this option
+  isCorrect        Boolean @default(false)
+  sortOrder        Int    @default(0)
+
+  // Relations
+  messageMetadata MessageMetadata @relation(fields: [messageMetadataId], references: [id], onDelete: Cascade)
+
+  @@index([messageMetadataId])
+  @@map("message_poll_options")
+}
+
+// Message formatting entities for rich text
+model MessageFormattingEntity {
+  id        String         @id @default(uuid())
+  messageId String
+  type      FormattingType
+  offset    Int
+  length    Int
+  url       String? // For links
+  userId    String? // For mentions
+  language  String? // For code blocks
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("message_formatting_entities")
 }
