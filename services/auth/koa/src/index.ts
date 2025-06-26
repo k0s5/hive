@@ -1,8 +1,7 @@
 import 'dotenv/config'
-import Koa, { type BaseContext } from 'koa'
+import Koa from 'koa'
 import cors from '@koa/cors'
 import { bodyParser } from '@koa/bodyparser'
-import { PrismaClient } from '@prisma/client'
 import router from './routes'
 import prisma from './providers/prisma'
 
