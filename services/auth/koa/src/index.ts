@@ -15,7 +15,11 @@ app.use(
 )
 
 // Middleware для добавления Prisma в контекст
-app.context.prisma = prisma
+// app.context.prisma = prisma
+app.use(async (ctx, next) => {
+  ctx.prisma = prisma
+  await next()
+})
 
 app.use(bodyParser())
 
