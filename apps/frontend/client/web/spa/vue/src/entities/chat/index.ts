@@ -1,2 +1,2 @@
-export * from './chat-header'
-export * from './chat-item'
+export { default as ChatHeader } from './ui/ChatHeader.vue'
+export { default as ChatItem } from './ui/ChatItem.vue'
