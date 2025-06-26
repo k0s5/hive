@@ -12,7 +12,6 @@
     "migrate:deploy": "npx prisma migrate deploy",
     "generate": "npx prisma generate"
   },
-  "keywords": [],
   "dependencies": {
     "@koa/bodyparser": "^6.0.0",
     "@koa/cors": "^5.0.0",
@@ -32,6 +31,7 @@
     "prisma": "^6.10.1",
     "tsx": "^4.20.3"
   },
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
